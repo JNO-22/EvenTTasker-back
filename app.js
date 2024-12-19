@@ -11,6 +11,10 @@ app.use(cors());
 app.use(eventoRouter, userRouter);
 app.use("/tareas", tareasRouter);
 
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+
 dbConnect()
   .then(() => {
     app.listen(3000, () => {
