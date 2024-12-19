@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const eventSchema = new mongoose.Schema({
-  name: {
+  titulo: {
     type: String,
     required: false,
   },
@@ -23,6 +23,12 @@ const eventSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
+  tareas: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Tarea",
+    },
+  ],
 });
 
 module.exports = mongoose.model("Event", eventSchema);

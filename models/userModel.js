@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    contraseña: {
+    password: {
       type: String,
       required: true,
     },
@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema(
     rol: {
       type: String,
       enum: ["admin", "cliente"],
-      default: "Cliente",
+      default: "cliente",
     },
     eventos: [
       {

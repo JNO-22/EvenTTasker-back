@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const userModel = require("../models/userModel");
-const { findById } = require("../models/eventModel");
 
 // FUNCIONES CRUD DEL USUARIO
 //Crear un nuevo usuario -- CREATE
@@ -10,10 +9,13 @@ router.post("/user", async (req, res) => {
   try {
     const nuevoUser = await userModel.create(body); // se crea el nuevo usuario
     res.status(201).send(nuevoUser); // se envia el nuevo usuario
-  } catch (error) {
-    res
-      .status(400)
-      .send({ mensaje: "Error al crear el usuario", error: error });
+  } catch (err) {
+    res.status(400).send({
+      mensaje:
+        err.name === "MongoError" || err.code === 11000
+          ? "El correo ya se encuentra registrado"
+          : "Error al crear el usuario",
+    });
   }
 });
 
@@ -31,11 +33,13 @@ router.get("/users", async (req, res) => {
 
 //Actualizar un usuario -- UPDATE
 router.put("/user/:id", async (req, res) => {
-  const id = req.params.id; // se obtiene el id
+  const id = req.query.id; // se obtiene el id
   const body = req.body; // se obtiene el body
+
   try {
     const userActualizado = await userModel.findByIdAndUpdate(id, body, {
       new: true, // <-- permite obtener el usuario actualizado en lugar de el original
+      runValidators: true,
     }); // se actualiza el usuario con el id y el body
     if (!userActualizado) {
       res.status(404).send({ mensaje: "Usuario no encontrado" });
@@ -65,17 +69,46 @@ router.delete("/user/:id", async (req, res) => {
   }
 });
 
-//Obtener Usuario por Mail -- Endpoint
-router.get("/user", async (req, res) => {
-  console.log(req.body);
-  const mail = req.body.correo;
+// Obtener un usuario -- READ
+router.get("/user/:id", async (req, res) => {
+  const userId = req.query.id;
   try {
-    const user = await userModel.findOne({ correo: mail });
-    res.status(200).send(user);
+    const user = await userModel.findById(userId);
+    if (!user) {
+      res.status(404).send({ mensaje: "Usuario no encontrado" });
+    } else {
+      res.status(200).send({
+        id: user._id,
+        nombre: user.nombre,
+        correo: user.correo,
+        telefono: user.telefono,
+      });
+    }
   } catch (err) {
     res
       .status(400)
-      .send({ mensaje: "Error al obtener el usuario", error: "" + err });
+      .send({ mensaje: "Error al buscar usuario", error: "" + err });
+  }
+});
+
+// Iniciar sesion -- Endpoint
+router.get("/user", async (req, res) => {
+  const mail = req.query.correo;
+  const password = req.query.password;
+  try {
+    const user = await userModel.findOne({ correo: mail, password: password });
+    if (!user) {
+      res.status(404).send({ mensaje: "Email o contraseña incorrectos" });
+    } else {
+      res.status(200).send({
+        id: user._id,
+        nombre: user.nombre,
+      });
+    }
+  } catch (err) {
+    res
+      .status(400)
+      .send({ mensaje: "Error al iniciar sesión", error: "" + err });
   }
 });
 
